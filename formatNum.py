@@ -105,32 +105,44 @@ def adjust(src):
         }
     }
 
+    daima = ''
+    haoma = ''
+    date = ''
+    date_num = ''
+
     request_url = assemble_ws_auth_url(url, "POST", APIKey, APISecret)
 
     headers = {'content-type': "application/json", 'host': 'api.xf-yun.com', 'app_id': APPId}
     # print(request_url)
-    response = requests.post(request_url, data=json.dumps(body), headers=headers)
-    # print(response)
-    tempResult = json.loads(response.content.decode())
-    finalResult = base64.b64decode(tempResult['payload']['result']['text']).decode()
-    finalResult = finalResult.replace(" ", "").replace("\n", "").replace("\t", "").strip()
-    finalResult = finalResult[:-1]
-    res = json.loads(finalResult)
+    try:
+        response = requests.post(request_url, data=json.dumps(body), headers=headers)
+        # print(response)
+    except Exception:
+        print('识别失败')
+    else:
+        print('识别成功')
+        tempResult = json.loads(response.content.decode())
+        finalResult = base64.b64decode(tempResult['payload']['result']['text']).decode()
+        finalResult = finalResult.replace(" ", "").replace("\n", "").replace("\t", "").strip()
+        finalResult = finalResult[:-1]
+        res1 = json.loads(finalResult)
+        for x in res1['object_list'][0]['region_list']:
+            if x['type'] == 'vat-invoice-daima-right-side':
+                daima = x['text_block_list'][0]['value']
+            elif x['type'] == 'vat-invoice-issue-date':
+                date = x['text_block_list'][0]['value']
+            elif x['type'] == 'vat-invoice-haoma-right-side':
+                haoma = x['text_block_list'][0]['value']
 
-    daima = ''
-    haoma = ''
-    date = ''
-    for x in res['object_list'][0]['region_list']:
-        if x['type'] == 'vat-invoice-daima-right-side':
-            daima = x['text_block_list'][0]['value']
-        elif x['type'] == 'vat-invoice-issue-date':
-            date = x['text_block_list'][0]['value']
-        elif x['type'] == 'vat-invoice-haoma-right-side':
-            haoma = x['text_block_list'][0]['value']
+        if date:
+            date_num = date[:4] + date[5:7] + date[8:10]
 
-    date_num = ''
-    if date:
-        date_num = date[:4] + date[5:7] + date[8:10]
+    # 临时调整
+    # if daima=='037002000111' or daima=='031002000411' :
+    #     daima = ''
+    #     haoma = ''
+    #     date_num = ''
+
     res = daima.ljust(14) + haoma.ljust(10) + date_num
     for i in range(len(res)):
         if res[i] == '6':
