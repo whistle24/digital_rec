@@ -1,3 +1,4 @@
+# 准确率判断
 def res_judge():
     ans_pic = 0
     ans_num = 0
